@@ -1,0 +1,12 @@
+version: '3'
+services:
+  broker:
+    image: eclipse-mosquitto
+    volumes:
+      - "./mosquitto:/mosquitto"
+    networks:
+      - localnet
+    ports:
+      - "1883:1883"
+networks:
+    localnet:
