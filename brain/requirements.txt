@@ -27,7 +27,7 @@ monotonic==1.5
 multidict==4.7.4
 netifaces==0.10.6
 paho-mqtt==1.5.0
-Pillow==3.1.2
+Pillow==6.2.0
 pyasn1==0.1.9
 pycups==1.9.73
 pycurl==7.43.0
