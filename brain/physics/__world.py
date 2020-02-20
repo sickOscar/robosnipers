@@ -146,6 +146,8 @@ class __World:
 
         obstacle_box = Box2D.b2PolygonShape(vertices=v)
         obstacle_box_fixture = Box2D.b2FixtureDef(shape=obstacle_box)
+        if "collisionGroup" in obstacle_spec:
+            obstacle_box_fixture.filter.groupIndex = obstacle_spec['collisionGroup']
 
         obstacle_body.CreateFixture(obstacle_box_fixture)
         

@@ -6,6 +6,8 @@ import math
 from .tire import Tire
 from .raycast_closest_callback import RayCastClosestCallback
 
+from .const import TARGET_COLLISION_GROUP
+
 class Agent:
 
     vertices = [
@@ -128,6 +130,12 @@ class Agent:
 
         self.sensors["rear"] = self.raycast_single_sensor(rear_point1, rear_point2)
 
+        self.raycast_camera(
+            self.body.GetWorldPoint(Box2D.b2Vec2(0, 27)),
+            math.pi / 2,
+            50
+        )
+
             
     def raycast_single_sensor(self, start_point, end_point):
         self.world.debug_objects.append({
@@ -138,20 +146,80 @@ class Agent:
             }
         })
 
-        front_left_callback = RayCastClosestCallback()
-        self.world.RayCast(front_left_callback, start_point, end_point)
+        callback = RayCastClosestCallback()
+        self.world.RayCast(callback, start_point, end_point)
 
-        if front_left_callback.hit:
-            if hasattr(front_left_callback, 'points'):
-                print(front_left_callback.points)
-            else:
-                front_left_result_vec = Box2D.b2Vec2(
-                    front_left_callback.point.x - start_point.x,
-                    front_left_callback.point.y - start_point.y,
-                )
-                return front_left_result_vec.length
+        if callback.hit:
+            result_vec = Box2D.b2Vec2(
+                callback.point.x - start_point.x,
+                callback.point.y - start_point.y,
+            )
+            return result_vec.length
             
         return None
+
+
+    def raycast_camera(self, start_point, view_field_angle, length):
+
+        samples = 30
+        starting_angle = view_field_angle / 2
+        increment = view_field_angle / samples
+
+        contacts = []
+        min_angle = None
+        max_angle = None
+
+        min_vec = None
+        max_vec = None
+
+        for index in range(0, samples):
+            angle = self.body.angle + starting_angle + (increment * index)
+            d = (length * math.cos(angle), length * math.sin(angle))
+            point_2 = start_point + d
+
+            self.world.debug_objects.append({
+                "type": "segment",
+                "props": {
+                    "p1": start_point,
+                    "p2": point_2
+                }
+            })
+
+            callback = RayCastClosestCallback(TARGET_COLLISION_GROUP)
+            self.world.RayCast(callback, start_point, point_2)
+
+            if callback.hit:
+
+                if min_angle is not None:
+                    min_angle = min(min_angle, angle)
+                else:
+                    min_angle = angle
+
+                if max_angle is not None:
+                    max_angle = max(max_angle, angle)
+                else:
+                    max_angle = angle
+
+                result_vec = Box2D.b2Vec2(
+                    callback.point.x - start_point.x,
+                    callback.point.y - start_point.y,
+                )
+
+                if angle is min_angle:
+                    min_vec = result_vec
+
+                if angle is max_angle:
+                    max_vec = result_vec
+                    
+                contacts.append((angle, result_vec.length))
+
+        if len(contacts) > 0:
+            print('SEE TARGET')
+
+            target_vector = max_vec - min_vec
+            
+            print(target_vector)
+            print(min_angle, max_angle)
 
 
     def move(self):
