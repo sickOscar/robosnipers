@@ -75,8 +75,8 @@ def on_connect(client, userdata, flags, rc):
         # reconnect then subscriptions will be renewed.
         client.subscribe("/".join(("sensors", BOT_ID, "#")))
 
-        t = threading.Thread(target=drive, args=(client,), daemon=True)
-        t.start()
+        # t = threading.Thread(target=drive, args=(client,), daemon=True)
+        # t.start()
 
     except Exception as e:
         print(e)
@@ -100,13 +100,11 @@ def handle_system_message(message):
     return None
 
 def handle_sensor_data(message):
-    print("Sensor data")
-    print(message.topic)
     action = message.topic.split("/")[-1]
     payload = message.payload.decode('utf8')
     if action == "proximity":
         CAR["proximity"] = [float(p) for p in payload.split("|")]
-        print(action,CAR["proximity"])
+        # print(action,CAR["proximity"])
     return None
 
 client = mqtt.Client()
