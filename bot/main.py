@@ -24,7 +24,7 @@ sensors/BOT_ID/proximity "{front_left}|{front_right}|{rear}" --- proximity senso
 """
 
 
-BOT_ID = "test"
+BOT_ID = "asdasd"
 CAR = {}
 
 
