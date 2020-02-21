@@ -1,301 +1,252 @@
 <html>
 
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.6.2/fabric.js"></script>
+    <script src="decomp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+    <style>
+        #main-canvas {
+            background-color: #efefef;
+        }
+    </style>
 
-    <script src="https://raw.githubusercontent.com/jarek-foksa/path-data-polyfill/master/path-data-polyfill.js"></script>
-
-    <script
-  src="https://code.jquery.com/jquery-2.2.4.min.js"
-  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
-  crossorigin="anonymous"></script>
 
 </head>
 
 <body>
-    <style>
-        #drawing-mode {
-            margin-bottom: 10px;
-            vertical-align: top;
-        }
-
-        #drawing-mode-options {
-            display: inline-block;
-            vertical-align: top;
-            margin-bottom: 10px;
-            margin-top: 10px;
-            background: #f5f2f0;
-            padding: 10px;
-        }
-
-        label {
-            display: inline-block;
-            width: 130px;
-        }
-
-        .info {
-            display: inline-block;
-            width: 25px;
-            background: #ffc;
-        }
-
-        #bd-wrapper {
-            min-width: 1500px;
-        }
-    </style>
-
-    <canvas id="c" width="500" height="500" style="border:1px solid #aaa"></canvas>
-
-    <div style="display: inline-block; margin-left: 10px">
-        <button id="drawing-mode" class="btn btn-info">Cancel drawing mode</button><br>
-        <button id="clear-canvas" class="btn btn-info">Clear</button><br>
-
+    <div>
         <button id="export">Export</button>
-
-        <p>
-            <a target="_blank" href="https://shinao.github.io/PathToPoints/">Strumento di trasformazione</a>
-        </p>
-
-        <div id="drawing-mode-options">
-            <label for="drawing-mode-selector">Mode:</label>
-            <select id="drawing-mode-selector">
-                <option>Pencil</option>
-                <option>Circle</option>
-                <option>Spray</option>
-                <option>Pattern</option>
-
-                <option>hline</option>
-                <option>vline</option>
-                <option>square</option>
-                <option>diamond</option>
-                <option>texture</option>
-            </select><br>
-
-            <label for="drawing-line-width">Line width:</label>
-            <span class="info">30</span><input type="range" value="30" min="0" max="150" id="drawing-line-width"><br>
-
-            <label for="drawing-color">Line color:</label>
-            <input type="color" value="#005E7A" id="drawing-color"><br>
-
-            <label for="drawing-shadow-color">Shadow color:</label>
-            <input type="color" value="#005E7A" id="drawing-shadow-color"><br>
-
-            <label for="drawing-shadow-width">Shadow width:</label>
-            <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-width"><br>
-
-            <label for="drawing-shadow-offset">Shadow offset:</label>
-            <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-offset"><br>
-        </div>
     </div>
 
-
+    <div>
+        <canvas id="main-canvas" width="1500px" height="1000px" style="background: url('./aus.png'); background-size: cover;"></canvas>
+    </div>
     <script>
-        (function () {
 
-            var $$ = (el) => document.getElementById(el)
 
-            var canvas = this.__canvas = new fabric.Canvas('c', {
-                isDrawingMode: true
+
+        const canvas = document.getElementById('main-canvas')
+        const ctx = canvas.getContext('2d');
+        setupCanvasEvents(canvas)
+
+        const polys = []
+
+        const GEOJson = {}
+
+        let currentPath = []
+        let currentLength = 0;
+        let reflexVertices = [];
+        let steinerPoints = [];
+
+        let mousedown = false;
+
+        const colors = ["#f99", "#9f9", "#99f", "#ff9"];
+
+        // Setup GUI
+        var settings = {
+            minEdgeLength: 50,
+            quickDecomp: true,
+            removeCollinear: true,
+            collinearThreshold: 0.001,
+        };
+        var gui = new dat.GUI();
+
+        var settingsFolder = gui.addFolder('Settings');
+        settingsFolder.open();
+        settingsFolder.add(settings, 'minEdgeLength', 1, 100);
+        settingsFolder.add(settings, 'quickDecomp');
+        settingsFolder.add(settings, 'removeCollinear');
+        settingsFolder.add(settings, 'collinearThreshold', 0, Math.PI / 4);
+
+        let finalMap = []
+
+        let paths = []
+
+        let mousePos = []
+
+
+        function setupCanvasEvents(canvas) {
+
+            canvas.addEventListener('mousedown', function (e) {
+
+                currentPath = [getMousePos(e)];
+                currentLength = 0;
+                reflexVertices.length = steinerPoints.length = 0;
+
+                mousedown = true;
             });
 
-            fabric.Object.prototype.transparentCorners = false;
+            canvas.addEventListener('mouseup', function (e) {
+                mousedown = false;
 
-            var drawingModeEl = $$('drawing-mode'),
-                drawingOptionsEl = $$('drawing-mode-options'),
-                drawingColorEl = $$('drawing-color'),
-                drawingShadowColorEl = $$('drawing-shadow-color'),
-                drawingLineWidthEl = $$('drawing-line-width'),
-                drawingShadowWidth = $$('drawing-shadow-width'),
-                drawingShadowOffset = $$('drawing-shadow-offset'),
-                clearEl = $$('clear-canvas');
+                currentPath.push(mousePos)
 
-            clearEl.onclick = function () { canvas.clear() };
-
-            drawingModeEl.onclick = function () {
-                canvas.isDrawingMode = !canvas.isDrawingMode;
-                if (canvas.isDrawingMode) {
-                    drawingModeEl.innerHTML = 'Cancel drawing mode';
-                    drawingOptionsEl.style.display = '';
+                if (currentPath.length > 3) {
+                    setPath(currentPath)
                 }
-                else {
-                    drawingModeEl.innerHTML = 'Enter drawing mode';
-                    drawingOptionsEl.style.display = 'none';
-                }
-            };
-
-            if (fabric.PatternBrush) {
-                var vLinePatternBrush = new fabric.PatternBrush(canvas);
-                vLinePatternBrush.getPatternSrc = function () {
-
-                    var patternCanvas = fabric.document.createElement('canvas');
-                    patternCanvas.width = patternCanvas.height = 10;
-                    var ctx = patternCanvas.getContext('2d');
-
-                    ctx.strokeStyle = this.color;
-                    ctx.lineWidth = 5;
-                    ctx.beginPath();
-                    ctx.moveTo(0, 5);
-                    ctx.lineTo(10, 5);
-                    ctx.closePath();
-                    ctx.stroke();
-
-                    return patternCanvas;
-                };
-
-                var hLinePatternBrush = new fabric.PatternBrush(canvas);
-                hLinePatternBrush.getPatternSrc = function () {
-
-                    var patternCanvas = fabric.document.createElement('canvas');
-                    patternCanvas.width = patternCanvas.height = 10;
-                    var ctx = patternCanvas.getContext('2d');
-
-                    ctx.strokeStyle = this.color;
-                    ctx.lineWidth = 5;
-                    ctx.beginPath();
-                    ctx.moveTo(5, 0);
-                    ctx.lineTo(5, 10);
-                    ctx.closePath();
-                    ctx.stroke();
-
-                    return patternCanvas;
-                };
-
-                var squarePatternBrush = new fabric.PatternBrush(canvas);
-                squarePatternBrush.getPatternSrc = function () {
-
-                    var squareWidth = 10, squareDistance = 2;
-
-                    var patternCanvas = fabric.document.createElement('canvas');
-                    patternCanvas.width = patternCanvas.height = squareWidth + squareDistance;
-                    var ctx = patternCanvas.getContext('2d');
-
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(0, 0, squareWidth, squareWidth);
-
-                    return patternCanvas;
-                };
-
-                var diamondPatternBrush = new fabric.PatternBrush(canvas);
-                diamondPatternBrush.getPatternSrc = function () {
-
-                    var squareWidth = 10, squareDistance = 5;
-                    var patternCanvas = fabric.document.createElement('canvas');
-                    var rect = new fabric.Rect({
-                        width: squareWidth,
-                        height: squareWidth,
-                        angle: 45,
-                        fill: this.color
-                    });
-
-                    var canvasWidth = rect.getBoundingRect().width;
-
-                    patternCanvas.width = patternCanvas.height = canvasWidth + squareDistance;
-                    rect.set({ left: canvasWidth / 2, top: canvasWidth / 2 });
-
-                    var ctx = patternCanvas.getContext('2d');
-                    rect.render(ctx);
-
-                    return patternCanvas;
-                };
-
-                var img = new Image();
-                img.src = '../assets/honey_im_subtle.png';
-
-                var texturePatternBrush = new fabric.PatternBrush(canvas);
-                texturePatternBrush.source = img;
-            }
-
-            $$('drawing-mode-selector').onchange = function () {
-
-                if (this.value === 'hline') {
-                    canvas.freeDrawingBrush = vLinePatternBrush;
-                }
-                else if (this.value === 'vline') {
-                    canvas.freeDrawingBrush = hLinePatternBrush;
-                }
-                else if (this.value === 'square') {
-                    canvas.freeDrawingBrush = squarePatternBrush;
-                }
-                else if (this.value === 'diamond') {
-                    canvas.freeDrawingBrush = diamondPatternBrush;
-                }
-                else if (this.value === 'texture') {
-                    canvas.freeDrawingBrush = texturePatternBrush;
-                }
-                else {
-                    canvas.freeDrawingBrush = new fabric[this.value + 'Brush'](canvas);
-                }
-
-                if (canvas.freeDrawingBrush) {
-                    canvas.freeDrawingBrush.color = drawingColorEl.value;
-                    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
-                    canvas.freeDrawingBrush.shadow = new fabric.Shadow({
-                        blur: parseInt(drawingShadowWidth.value, 10) || 0,
-                        offsetX: 0,
-                        offsetY: 0,
-                        affectStroke: true,
-                        color: drawingShadowColorEl.value,
-                    });
-                }
-            };
-
-            drawingColorEl.onchange = function () {
-                canvas.freeDrawingBrush.color = this.value;
-            };
-            drawingShadowColorEl.onchange = function () {
-                canvas.freeDrawingBrush.shadow.color = this.value;
-            };
-            drawingLineWidthEl.onchange = function () {
-                canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
-                this.previousSibling.innerHTML = this.value;
-            };
-            drawingShadowWidth.onchange = function () {
-                canvas.freeDrawingBrush.shadow.blur = parseInt(this.value, 10) || 0;
-                this.previousSibling.innerHTML = this.value;
-            };
-            drawingShadowOffset.onchange = function () {
-                canvas.freeDrawingBrush.shadow.offsetX = parseInt(this.value, 10) || 0;
-                canvas.freeDrawingBrush.shadow.offsetY = parseInt(this.value, 10) || 0;
-                this.previousSibling.innerHTML = this.value;
-            };
-
-            if (canvas.freeDrawingBrush) {
-                canvas.freeDrawingBrush.color = drawingColorEl.value;
-                canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
-                canvas.freeDrawingBrush.shadow = new fabric.Shadow({
-                    blur: parseInt(drawingShadowWidth.value, 10) || 0,
-                    offsetX: 0,
-                    offsetY: 0,
-                    affectStroke: true,
-                    color: drawingShadowColorEl.value,
-                });
-            }
-
-            function download(filename, content) {
-                var element = document.createElement('a');
-                element.setAttribute('href', 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(content));
-                element.setAttribute('download', filename);
-
-                element.style.display = 'none';
-                document.body.appendChild(element);
-
-                element.click();
-
-                document.body.removeChild(element);
-            }
-
-            $$('export').addEventListener('click', function(event) {
-                const svg = canvas.toSVG()
-                download('test.svg', svg)
-
+                currentPath = []
             })
 
+            function copy(p) {
+                return JSON.parse(JSON.stringify(p));
+            }
+
+            function setPath(p) {
+
+                polys.length = reflexVertices.length = steinerPoints.length = 0;
+                path = copy(p);
+
+                if (decomp.isSimple(path)) {
+                    if (decomp.makeCCW(path)) {
+                        console.log("The polygon is not counter-clockwise. Reversing it...");
+                    }
+
+                    if (settings.removeCollinear) {
+                        console.log("Removing collinear points... " + decomp.removeCollinearPoints(path, settings.collinearThreshold) + " points removed.");
+                    }
+                    console.log("setPath([" + path.map(function (point, i) {
+                        return "[" + point.toString() + "/*" + i + "*/]";
+                    }).join(",") + "])");
+
+                    console.log("Decomposing polygon of size " + path.length + "...");
+
+                    if (settings.quickDecomp) {
+                        decomp.quickDecomp(path, polys, reflexVertices, steinerPoints, 25, 100, 0, path);
+                    } else
+                        polys = decomp.decomp(path);
+
+                    finalMap.push(...copy(polys))
+                    console.log("Got " + polys.length + " convex polygons. Done.");
+
+                } else {
+                    console.log("The polygon was not simple. Aborting...");
+                }
 
 
+            }
+
+            canvas.addEventListener('mousemove', function (e) {
+                mousePos = getMousePos(e)
+                if (mousedown) {
+                    const point = mousePos;
+
+                    const lengthSquared = sqdist(point, currentPath[currentPath.length - 1]);
+
+                    const minLengthSquared = settings.minEdgeLength * settings.minEdgeLength;
+
+                    if (lengthSquared > minLengthSquared) {
+                        currentPath.push(point);
+                    }
+                }
+            });
+
+        }
+
+        function sqdist(a, b) {
+            var dx = b[0] - a[0];
+            var dy = b[1] - a[1];
+            return dx * dx + dy * dy;
+        }
+
+        function getMousePos(e) {
+            var offset = e.target.getBoundingClientRect();
+            return [e.clientX - offset.left, e.clientY - offset.top];
+        }
+
+        function render() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 
-        })();
+            ctx.strokeStyle = "black";
+
+            if (currentPath.length) {
+                ctx.beginPath();
+                ctx.lineWidth = "1";
+
+                ctx.moveTo(currentPath[0][0], currentPath[0][1])
+                for (var i = 1; i < currentPath.length; i++) {
+                    ctx.lineTo(
+                        currentPath[i][0],
+                        currentPath[i][1]
+                    )
+                }
+                if (mousedown) {
+                    ctx.lineTo(mousePos[0], mousePos[1])
+                }
+                ctx.lineTo(currentPath[0][0], currentPath[0][1])
+
+                ctx.stroke()
+            }
+
+            if (finalMap.length) {
+                finalMap.forEach(path => {
+
+                    ctx.strokeStyle = "blue";
+                    ctx.beginPath();
+                    ctx.lineWidth = "1";
+
+                    ctx.moveTo(path[0][0], path[0][1])
+                    for (var i = 1; i < path.length; i++) {
+                        ctx.lineTo(
+                            path[i][0],
+                            path[i][1]
+                        )
+                    }
+                    // ctx.lineTo(
+                    //         path[0][0],
+                    //         path[0][1]
+                    //     )
+                    ctx.closePath()
+                    ctx.fillStyle = colors[i % (colors.length)];
+                    ctx.fill()
+                    ctx.stroke()
+                })
+            }
+
+            if (mousedown) {
+                ctx.fillRect(mousePos[0], mousePos[1], 10, 10);
+            }
+
+            ctx.font = "30px Arial";
+            ctx.fillStyle = '#000'
+            ctx.fillText(mousePos, 10, 50);
+
+
+            window.requestAnimationFrame(render)
+        }
+
+        window.requestAnimationFrame(render);
+
+        function toGEOJson(polygon) {
+
+            return {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": polygon
+                },
+            }
+            
+
+        }
+
+
+        document.getElementById('export').addEventListener('click', function (e) {
+
+            const final = {
+                type: "FeatureCollection",
+                features: finalMap.map(toGEOJson)
+            }
+
+            console.log(final)
+
+
+        })
+
+       
+
     </script>
+
 </body>
 
 </html>

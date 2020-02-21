@@ -213,13 +213,16 @@ class Agent:
                     
                 contacts.append((angle, result_vec.length))
 
-        if len(contacts) > 0:
-            print('SEE TARGET')
 
-            target_vector = max_vec.Normalize() - min_vec.Normalize()
+        print(contacts)
 
-            print(target_vector)
-            print(min_angle, max_angle)
+        # if len(contacts) > 0:
+        #     print('SEE TARGET')
+
+            # target_vector = max_vec.Normalize() - min_vec.Normalize()
+
+            # print(target_vector)
+            # print(min_angle, max_angle)
 
 
     def move(self):

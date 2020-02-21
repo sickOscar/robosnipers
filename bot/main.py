@@ -24,7 +24,7 @@ sensors/BOT_ID/proximity "{front_left}|{front_right}|{rear}" --- proximity senso
 """
 
 
-BOT_ID = "asdasd"
+BOT_ID = "hgjkhgkjhkgjkhgj"
 CAR = {}
 
 
@@ -75,8 +75,8 @@ def on_connect(client, userdata, flags, rc):
         # reconnect then subscriptions will be renewed.
         client.subscribe("/".join(("sensors", BOT_ID, "#")))
 
-        # t = threading.Thread(target=drive, args=(client,), daemon=True)
-        # t.start()
+        t = threading.Thread(target=drive, args=(client,), daemon=True)
+        t.start()
 
     except Exception as e:
         print(e)

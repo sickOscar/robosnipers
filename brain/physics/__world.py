@@ -35,7 +35,7 @@ class __World:
         PPM = 5  # pixels per meter
         TARGET_FPS = 60
         TIME_STEP = 1.0 / TARGET_FPS
-        SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 680
+        SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 980
 
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
         pygame.display.set_caption('Robolaser')
@@ -129,7 +129,8 @@ class __World:
 
         self.world.debug_objects = []
 
-        for obstacle_spec in map['obstacles']:
+        for obstacle in map['features']:
+            obstacle_spec = obstacle["geometry"]
             self.create_obstacle(obstacle_spec)
 
 
@@ -141,7 +142,7 @@ class __World:
         obstacle_body = self.world.CreateBody(obstacle_body_def)
 
         v = []
-        for vertex in obstacle_spec['vertices']:
+        for vertex in obstacle_spec['coordinates']:
             v.append((vertex[0], vertex[1]))
 
         obstacle_box = Box2D.b2PolygonShape(vertices=v)
