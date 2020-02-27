@@ -16,6 +16,7 @@ docker-compose up
 To start developing what we called brain (server + simulation):
 ```
 cd brain
+```
 then create and setup the virtual env with:
 ```
 virtualenv venv
