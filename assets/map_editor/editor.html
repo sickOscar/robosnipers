@@ -6,6 +6,8 @@
     <style>
         #main-canvas {
             background-color: #efefef;
+            /* background-image: url('./nurb.jpg');  */
+            background-size: cover;
         }
     </style>
 
@@ -15,14 +17,13 @@
 <body>
     <div>
         <button id="export">Export</button>
+        <button id=load-map>Load Current Map</button>
     </div>
 
     <div>
-        <canvas id="main-canvas" width="1500px" height="1000px" style="background: url('./aus.png'); background-size: cover;"></canvas>
+        <canvas id="main-canvas" width="1500px" height="1000px"></canvas>
     </div>
     <script>
-
-
 
         const canvas = document.getElementById('main-canvas')
         const ctx = canvas.getContext('2d');
@@ -39,7 +40,26 @@
 
         let mousedown = false;
 
-        const colors = ["#f99", "#9f9", "#99f", "#ff9"];
+        const colors = [
+            "#f30e70",
+            "#e6bf97",
+            "#e9d0ed",
+            "#0404d4",
+            "#d69fb9",
+            "#5ea037",
+            "#9d7533",
+            "#03115b",
+            "#1990e1",
+            "#abe57e",
+            "#873acf",
+            "#56ce5a",
+            "#7bd7b4",
+            "#f7130c",
+            "#fa6dba",
+            "#b89507",
+            "#7ce74a",
+            "#6fd081"
+        ];
 
         // Setup GUI
         var settings = {
@@ -58,8 +78,10 @@
         settingsFolder.add(settings, 'collinearThreshold', 0, Math.PI / 4);
 
         let finalMap = []
+        let mapProps = []
 
         let paths = []
+        
 
         let mousePos = []
 
@@ -67,6 +89,21 @@
         function setupCanvasEvents(canvas) {
 
             canvas.addEventListener('mousedown', function (e) {
+                if (e.button !== 0) {
+                    return
+                }
+
+                const clickPoint = getMousePos(e);
+
+                const intersectionIndex = finalMap.reduce((isIn, polygon, polyIndex) => {
+                    return inside(clickPoint, polygon) ? polyIndex : isIn
+                }, false)
+
+                if (intersectionIndex !== false) {
+                    console.log('remove polygon', intersectionIndex);
+                    finalMap.splice(intersectionIndex, 1)
+                }
+
 
                 currentPath = [getMousePos(e)];
                 currentLength = 0;
@@ -74,6 +111,40 @@
 
                 mousedown = true;
             });
+
+            canvas.addEventListener('contextmenu', function(e) {
+                e.preventDefault()
+
+                const clickPoint = getMousePos(e);
+
+                const intersectionIndex = finalMap.reduce((isIn, polygon, polyIndex) => {
+                    return inside(clickPoint, polygon) ? polyIndex : isIn
+                }, false)
+
+                if (intersectionIndex !== false) {
+                    console.log('remove polygon', intersectionIndex);
+
+                    let defaults = 'polygon name,0'
+                    if (finalMap[intersectionIndex].properties) {
+                        defaults = Object.values(finalMap[intersectionIndex].properties).join(',')
+                    }
+
+                    const props = prompt("Polygon props (name,collisionGroup)", defaults)
+                    
+                    if (props) {
+                        const name = props.split(',')[0];
+                        const collisionGroup = parseInt(props.split(',')[1]);
+
+                        finalMap[intersectionIndex].properties = {
+                            name, collisionGroup
+                        }
+                    }
+
+
+                    
+                }
+
+            })
 
             canvas.addEventListener('mouseup', function (e) {
                 mousedown = false;
@@ -152,6 +223,25 @@
             return [e.clientX - offset.left, e.clientY - offset.top];
         }
 
+        function inside(point, vs) {
+            // ray-casting algorithm based on
+            // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+
+            var x = point[0], y = point[1];
+
+            var inside = false;
+            for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                var xi = vs[i][0], yi = vs[i][1];
+                var xj = vs[j][0], yj = vs[j][1];
+
+                var intersect = ((yi > y) != (yj > y))
+                    && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+
+            return inside;
+        };
+
         function render() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -197,7 +287,10 @@
                     //         path[0][1]
                     //     )
                     ctx.closePath()
-                    ctx.fillStyle = colors[i % (colors.length)];
+
+                    const colIndex = path.properties ? path.properties.collisionGroup : 0 
+
+                    ctx.fillStyle = colors[colIndex];
                     ctx.fill()
                     ctx.stroke()
                 })
@@ -220,10 +313,11 @@
         function toGEOJson(polygon) {
 
             return {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": polygon
+                type: "Feature",
+                properties: polygon.properties,
+                geometry: {
+                    type: "Polygon",
+                    coordinates: polygon
                 },
             }
             
@@ -232,15 +326,20 @@
 
 
         document.getElementById('export').addEventListener('click', function (e) {
-
             const final = {
                 type: "FeatureCollection",
                 features: finalMap.map(toGEOJson)
             }
-
             console.log(final)
+        })
 
-
+        document.getElementById('load-map').addEventListener('click', function(e) {
+            fetch('../map.json').then(r => r.json())
+                .then(GEOJsonMap => {
+                    finalMap = GEOJsonMap.features.map(feature => {
+                        return feature.geometry.coordinates;
+                    })
+                })
         })
 
        

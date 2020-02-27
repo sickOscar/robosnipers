@@ -11,4 +11,5 @@ class Registry:
 
     def broadcast(self, message):
         for socket_id in self.sockets:
+            # print('broadcast message to ' + str(socket_id))
             self.sockets[socket_id].write_message(message)

@@ -2,6 +2,8 @@ import paho.mqtt.client as mqtt
 import sys
 import time
 import threading
+from threading import Lock
+import random
 
 """ MQTT Protocol
 
@@ -24,21 +26,23 @@ sensors/BOT_ID/proximity "{front_left}|{front_right}|{rear}" --- proximity senso
 """
 
 
-BOT_ID = "hgjkhgkjhkgjkhgj"
-CAR = {}
+BOT_ID = str(random.getrandbits(5))
+CAR = {"limit":10,"updatelock":Lock()}
+CAR['updatelock'].acquire()
 
 
 def best_direction():
     proximity = CAR["proximity"]
     okdir = []
+    limit = CAR['limit']
     for p in proximity:
-        if p < 10:
+        if p < limit *2:
             status = False
         else:
             status = True
         okdir.append(status)
     print(okdir)
-    if proximity[0] > 10 and proximity[1] > 10:
+    if proximity[0] > limit and proximity[1] > limit:
         if okdir[0] and proximity[0] > proximity[1]:
             return ("turn","left")
         if okdir[1] and proximity[1] > proximity[0]:
@@ -48,18 +52,20 @@ def best_direction():
     return ("rear",None)
 
 def drive(client):
+    prev = ""
+    while not "proximity" in CAR:
+        CAR['updatelock'].acquire()
     while True:
-        if not "proximity" in CAR:
-            time.sleep(0.05)
-            continue
-
         direction,payload = best_direction()
-        client.publish('/'.join(('command', BOT_ID, direction)),payload)
+        if direction != prev:
+            print(direction,payload)
+            client.publish('/'.join(('command', BOT_ID, direction)),payload)
+            prev = direction
         if direction == "rear":
-            while CAR["proximity"][0] < 20 and CAR["proximity"][1] < 20:
-                time.sleep(0.1)
+            while CAR["proximity"][0] < CAR['limit']*2 and CAR["proximity"][1] < CAR['limit']*2:
+                CAR['updatelock'].acquire()
         else:
-            time.sleep(0.1)
+            CAR['updatelock'].acquire()
 
 
 
@@ -75,8 +81,8 @@ def on_connect(client, userdata, flags, rc):
         # reconnect then subscriptions will be renewed.
         client.subscribe("/".join(("sensors", BOT_ID, "#")))
 
-        t = threading.Thread(target=drive, args=(client,), daemon=True)
-        t.start()
+        # t = threading.Thread(target=drive, args=(client,), daemon=True)
+        # t.start()
 
     except Exception as e:
         print(e)
@@ -100,11 +106,15 @@ def handle_system_message(message):
     return None
 
 def handle_sensor_data(message):
+    #print("Sensor data")
+    #print(message.topic)
     action = message.topic.split("/")[-1]
     payload = message.payload.decode('utf8')
     if action == "proximity":
         CAR["proximity"] = [float(p) for p in payload.split("|")]
-        # print(action,CAR["proximity"])
+        if CAR["updatelock"].locked():
+            CAR["updatelock"].release()
+        #print(action,CAR["proximity"])
     return None
 
 client = mqtt.Client()

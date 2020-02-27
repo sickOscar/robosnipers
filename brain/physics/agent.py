@@ -6,26 +6,39 @@ import math
 from .tire import Tire
 from .raycast_closest_callback import RayCastClosestCallback
 
-from .const import TARGET_COLLISION_GROUP
+from .const import (
+    AGENT_WIDTH, AGENT_HEIGHT, 
+    TARGET_COLLISION_GROUP,
+    REAR_TIRE_JOINT_X,
+    REAR_TIRE_JOINT_Y,
+    FRONT_TIRE_JOINT_X,
+    FRONT_TIRE_JOINT_Y,
+    DEFAULT_STARTING_POSITION
+)
+
 
 class Agent:
 
     vertices = [
-        (6, 0),
-        (6, 27),
-        (-6, 27),
-        (-6, 0)
+        (AGENT_WIDTH / 2, 0),
+        (AGENT_WIDTH / 2, AGENT_HEIGHT),
+        (-AGENT_WIDTH / 2, AGENT_HEIGHT),
+        (-AGENT_WIDTH / 2, 0)
     ]
 
     tire_anchors = [
-        (-6.5, 4),
-        (6.5, 4),
-        (-6.5, 23),
-        (6.5, 23)
+        (-REAR_TIRE_JOINT_X, REAR_TIRE_JOINT_Y),
+        (REAR_TIRE_JOINT_X, REAR_TIRE_JOINT_Y),
+        (-FRONT_TIRE_JOINT_X, FRONT_TIRE_JOINT_Y),
+        (FRONT_TIRE_JOINT_X, FRONT_TIRE_JOINT_Y)
     ]
 
 
-    def __init__(self, world, id, position=(30, 30), vertices=None, density=0.1, **tire_kws):
+    def __init__(self, world, id, 
+        position=DEFAULT_STARTING_POSITION, 
+        vertices=None, 
+        density=0.1, 
+        **tire_kws):
         
         self.id = id
         self.world = world
@@ -104,19 +117,19 @@ class Agent:
 
     def raycast(self):
 
-        sensor_length = 50
+        sensor_length = 150
 
         ## FRONT LEFT
-        front_left_point1 = self.body.GetWorldPoint(Box2D.b2Vec2(-6, 27))
-        angle = self.body.angle + (math.pi / 2)
+        front_left_point1 = self.body.GetWorldPoint(Box2D.b2Vec2(-AGENT_WIDTH / 2, AGENT_HEIGHT))
+        angle = self.body.angle + (math.pi / 2) + 0.0
         front_left_d = (sensor_length * math.cos(angle), sensor_length * math.sin(angle))
         front_left_point2 = front_left_point1 + front_left_d
 
         self.sensors["front_left"] = self.raycast_single_sensor(front_left_point1, front_left_point2)
 
         ## FRONT RIGHT
-        front_right_point1 = self.body.GetWorldPoint(Box2D.b2Vec2(6, 27))
-        angle = self.body.angle + (math.pi / 2)
+        front_right_point1 = self.body.GetWorldPoint(Box2D.b2Vec2(AGENT_WIDTH / 2, AGENT_HEIGHT))
+        angle = self.body.angle + (math.pi / 2) - 0.0
         front_right_d = (sensor_length * math.cos(angle), sensor_length * math.sin(angle))
         front_right_point2 = front_right_point1 + front_right_d
 
@@ -131,7 +144,7 @@ class Agent:
         self.sensors["rear"] = self.raycast_single_sensor(rear_point1, rear_point2)
 
         self.raycast_camera(
-            self.body.GetWorldPoint(Box2D.b2Vec2(0, 27)),
+            self.body.GetWorldPoint(Box2D.b2Vec2(0, AGENT_HEIGHT)),
             math.pi / 2,
             50
         )
@@ -161,7 +174,7 @@ class Agent:
 
     def raycast_camera(self, start_point, view_field_angle, length):
 
-        samples = 30
+        samples = 20
         starting_angle = view_field_angle / 2
         increment = view_field_angle / samples
 
@@ -210,11 +223,8 @@ class Agent:
 
                 if angle is max_angle:
                     max_vec = result_vec
-                    
-                contacts.append((angle, result_vec.length))
 
-
-        print(contacts)
+               
 
         # if len(contacts) > 0:
         #     print('SEE TARGET')
@@ -224,6 +234,14 @@ class Agent:
             # print(target_vector)
             # print(min_angle, max_angle)
 
+    def get_status_string(self):
+        tokens = [
+            str(self.id),
+            self.body.position[0],
+            self.body.position[1],
+            self.body.angle
+        ]
+        return "|".join(str(t) for t in tokens)
 
     def move(self):
         self.direction = ["up"]

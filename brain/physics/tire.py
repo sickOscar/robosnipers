@@ -3,8 +3,8 @@ class Tire:
 
         
     def __init__(self, car, max_forward_speed=100.0,
-                 max_backward_speed=-150, max_drive_force=150,
-                 turn_torque=15, max_lateral_impulse=3,
+                 max_backward_speed=-600, max_drive_force=600,
+                 turn_torque=45, max_lateral_impulse=3,
                  dimensions=(1, 2.5), density=1.0,
                  position=(0, 0)):
 

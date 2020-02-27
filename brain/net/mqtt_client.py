@@ -65,7 +65,7 @@ class MqttClient:
             return True
 
         if str(msg.topic).startswith('command'):
-            print('Command received')
+            # print('Command received')
             self.world.handle_remote_command(msg)
             return True
 

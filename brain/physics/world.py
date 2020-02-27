@@ -8,7 +8,7 @@ class World:
         raise Exception('Unable to init singleton')
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, cli_args):
         if not World.instance:
-            World.instance = Real()
+            World.instance = Real(cli_args)
         return World.instance

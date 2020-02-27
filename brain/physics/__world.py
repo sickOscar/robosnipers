@@ -4,19 +4,42 @@ import pygame
 from pygame.locals import (QUIT, KEYDOWN, K_ESCAPE)
 import threading
 import time
+import sys
+import getopt
 
 from .agent import Agent
+from .const import (
+    PPM, TARGET_FPS, TIME_STEP, 
+    SCREEN_WIDTH, SCREEN_HEIGHT, ZOOM
+)
 
 
 class __World:
 
-    def __init__(self):
+    def __init__(self, cli_args):
         # load map
         self.map = self.load_map()
         # load world
         self.load_world(self.map)
         # load agents
         self.agents = {}
+
+        self.cli_args = cli_args
+
+        self.debug = False
+
+        try:
+            arguments, values = getopt.getopt(self.cli_args[1:], ['d'], ['debug'])
+
+            for currentArgument, currentValue in arguments:
+                if currentArgument in ("-d", "--debug"):
+                    print ("enabling debug draw")
+                    self.debug = True
+
+        except getopt.error as err:
+            # output error, and return with an error code
+            print (str(err))
+            sys.exit(2)
 
         self.debug_objects = []
 
@@ -29,17 +52,10 @@ class __World:
 
     def run_game(self):
 
-        # --- constants ---
-        # Box2D deals with meters, but we want to display pixels,
-        # so define a conversion factor:
-        PPM = 5  # pixels per meter
-        TARGET_FPS = 60
-        TIME_STEP = 1.0 / TARGET_FPS
-        SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 980
-
-        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-        pygame.display.set_caption('Robolaser')
-        clock = pygame.time.Clock()
+        if self.debug:
+            screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+            pygame.display.set_caption('Robolaser')
+            clock = pygame.time.Clock()
 
         colors = {
             Box2D.b2.staticBody: (255, 255, 255, 255),
@@ -48,59 +64,66 @@ class __World:
 
         running = True
         while running:
-            # Check the event queue
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    # The user closed the window or pressed escape
-                    running = False
 
-            screen.fill((0, 0, 0, 0))
+            if self.debug:
 
-            # Draw the world
-            for body in self.world.bodies:
-                # The body gives us the position and angle of its shapes
-                for fixture in body.fixtures:
-                    # The fixture holds information like density and friction,
-                    # and also the shape.
-                    shape = fixture.shape
+                # Check the event queue
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        # The user closed the window or pressed escape
+                        print('EXIT')
+                        running = False
+                        pygame.display.quit()
+                        pygame.quit()
+                        sys.exit(0)
 
-                    # Naively assume that this is a polygon shape. (not good normally!)
-                    # We take the body's transform and multiply it with each
-                    # vertex, and then convert from meters to pixels with the scale
-                    # factor.
-                    vertices = [(body.transform * v) * PPM for v in shape.vertices]
+                screen.fill((0, 0, 0, 0))
 
-                    # But wait! It's upside-down! Pygame and Box2D orient their
-                    # axes in different ways. Box2D is just like how you learned
-                    # in high school, with positive x and y directions going
-                    # right and up. Pygame, on the other hand, increases in the
-                    # right and downward directions. This means we must flip
-                    # the y components.
-                    vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
+                # Draw the world
+                for body in self.world.bodies:
+                    # The body gives us the position and angle of its shapes
+                    for fixture in body.fixtures:
+                        # The fixture holds information like density and friction,
+                        # and also the shape.
+                        shape = fixture.shape
 
-                    pygame.draw.polygon(screen, colors[body.type], vertices)
+                        # Naively assume that this is a polygon shape. (not good normally!)
+                        # We take the body's transform and multiply it with each
+                        # vertex, and then convert from meters to pixels with the scale
+                        # factor.
+                        vertices = [((body.transform * v) * PPM * ZOOM) for v in shape.vertices]
 
-            # Draw debug objects 
-            for debug_object in self.world.debug_objects:
-                
-                if debug_object['type'] == 'segment':
+                        # But wait! It's upside-down! Pygame and Box2D orient their
+                        # axes in different ways. Box2D is just like how you learned
+                        # in high school, with positive x and y directions going
+                        # right and up. Pygame, on the other hand, increases in the
+                        # right and downward directions. This means we must flip
+                        # the y components.
+                        vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
 
-                    p1 = debug_object['props']['p1']
-                    p2 = debug_object['props']['p2']
+                        pygame.draw.polygon(screen, colors[body.type], vertices)
 
-                    p1_translated = (p1[0] * PPM, SCREEN_HEIGHT - p1[1] * PPM)
-                    p2_translated = (p2[0] * PPM, SCREEN_HEIGHT - p2[1] * PPM)
+                # Draw debug objects 
+                for debug_object in self.world.debug_objects:
+                    
+                    if debug_object['type'] == 'segment':
 
-                    pygame.draw.aaline(
-                        screen, 
-                        (255, 0, 0), 
-                        p1_translated, 
-                        p2_translated
-                    )
+                        p1 = debug_object['props']['p1']
+                        p2 = debug_object['props']['p2']
+
+                        p1_translated = (p1[0] * PPM * ZOOM, SCREEN_HEIGHT - p1[1] * PPM * ZOOM)
+                        p2_translated = (p2[0] * PPM * ZOOM, SCREEN_HEIGHT - p2[1] * PPM * ZOOM)
+
+                        pygame.draw.aaline(
+                            screen, 
+                            (255, 0, 0), 
+                            p1_translated, 
+                            p2_translated
+                        )
 
 
-            for agent in self.agents:
-                self.agents[agent].update()
+                for agent in self.agents:
+                    self.agents[agent].update()
 
             # Make Box2D simulate the physics of our world for one step.
             # Instruct the world to perform a single step of simulation. It is
@@ -114,9 +137,10 @@ class __World:
             for agent in self.agents:
                 self.agents[agent].raycast()
 
-            # Flip the screen and try to keep at the target FPS
-            pygame.display.flip()
-            clock.tick(TARGET_FPS)
+            if self.debug:
+                # Flip the screen and try to keep at the target FPS
+                pygame.display.flip()
+                clock.tick(TARGET_FPS)
 
 
     def load_map(self):
@@ -130,8 +154,7 @@ class __World:
         self.world.debug_objects = []
 
         for obstacle in map['features']:
-            obstacle_spec = obstacle["geometry"]
-            self.create_obstacle(obstacle_spec)
+            self.create_obstacle(obstacle)
 
 
     def create_obstacle(self, obstacle_spec):
@@ -142,13 +165,15 @@ class __World:
         obstacle_body = self.world.CreateBody(obstacle_body_def)
 
         v = []
-        for vertex in obstacle_spec['coordinates']:
+        for vertex in obstacle_spec["geometry"]['coordinates']:
             v.append((vertex[0], vertex[1]))
 
         obstacle_box = Box2D.b2PolygonShape(vertices=v)
         obstacle_box_fixture = Box2D.b2FixtureDef(shape=obstacle_box)
-        if "collisionGroup" in obstacle_spec:
-            obstacle_box_fixture.filter.groupIndex = obstacle_spec['collisionGroup']
+        
+        if "properties" in obstacle_spec:
+            if obstacle_spec["properties"]['collisionGroup']:
+                obstacle_box_fixture.filter.groupIndex = obstacle_spec["properties"]['collisionGroup']
 
         obstacle_body.CreateFixture(obstacle_box_fixture)
         
@@ -167,7 +192,10 @@ class __World:
                 print("Recycling agent " + agent_id)
             else:
                 print("Adding agent " + agent_id)
-                self.agents[agent_id] = Agent(self.world, agent_id)
+                self.agents[agent_id] = Agent(
+                    world=self.world,
+                    id=agent_id
+                    )
         except Exception as e:
             print(e)
 
@@ -177,10 +205,8 @@ class __World:
         agent_id = topic_tokens[1]
         command = topic_tokens[2]
         payload = message.payload.decode('utf-8')
-        print(payload)
-        
 
-        print("Executing " + command + " on agent " + agent_id + " " + payload)
+        # print("Executing " + command + " on agent " + agent_id + " " + payload)
 
         if not self.agents[agent_id]:
             print("Unknown agent")

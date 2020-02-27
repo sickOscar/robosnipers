@@ -1,37 +1,108 @@
-<!DOCTYPE html>
 <html>
     <head>
-        <title>WebSocket demo</title>
+        <script src="https://cdn.jsdelivr.net/npm/p5@0.10.2/lib/p5.js"></script>
+
+        <style>
+
+            *, body {
+                margin: 0;
+                padding: 0;
+            }
+        </style>
+
     </head>
     <body>
-        <script
-			  src="https://code.jquery.com/jquery-3.4.1.min.js"
-			  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-			  crossorigin="anonymous"></script>
         <script>
-            
-            
-            $(document).ready(function(){
 
-                var ws = new WebSocket("ws://localhost:4041/"),
-                messages = document.createElement('ul');
-                ws.onmessage = function (event) {
-                    console.log('asdasdada')
-                    var messages = document.getElementsByTagName('ul')[0],
-                        message = document.createElement('li'),
-                        content = document.createTextNode(event.data);
-                    message.appendChild(content);
-                    messages.appendChild(message);
-                };
-                document.body.appendChild(messages);
+            let agents = {}
+
+            const socket = new WebSocket('ws://localhost:4041')
+
+            socket.onopen = function(event) {
+                console.log('connection open')
+            }
+
+            socket.onclose = function(event) {
+                console.log('connection closed')
+            }
+
+            socket.onmessage = function(event) {
+                agents = event.data.split('+').reduce((acc, agentString) => {
+                    const tokens = agentString.split('|');
+                    const agent = {
+                        x: tokens[1],
+                        y: tokens[2],
+                        angle: tokens[3]
+                    }
+                    return {
+                        ...acc,
+                        [tokens[0]]: agent
+                    }
+                }, {})
+            }
+
+            let running = false;
+            let GEOJsonMap = {}
+
+            async function loadMap() {
+                return await fetch('map.json').then(r => r.json())
+            }
+
+            function setup() {
+                createCanvas(windowWidth, windowHeight);
+                loadMap().then((mapData) => {
+                    console.log(mapData)
+                    running = true
+                    GEOJsonMap = mapData
+                })
+            }
+
+            function windowResized() {
+                resizeCanvas(windowWidth, windowHeight);
+            }
+
+            function drawDebugMap() {
+
+                noFill();
+                stroke(255)
+                strokeWeight(1);
+
+                GEOJsonMap.features.forEach(feature => {
+                    beginShape();
+                    feature.geometry.coordinates.forEach(coord => {
+                        vertex(coord[0], coord[1]);
+                    })
+                    endShape(CLOSE);
+                })
                 
-            });
+            }
+
+            function drawAgents() {
+                Object.keys(agents).forEach(agentUuid => {
+                    const agent = agents[agentUuid]
+                    if (agent.x && agent.y) {
+                        circle(agent.x, agent.y, 25);
+                    }
+                    
+                })
+                
+
+            }
+
+            function draw() {
+
+                if (!running) {
+                    return
+                }
+
+                background(51)
+                drawDebugMap()
+
+                drawAgents();
+
+            }
 
 
         </script>
-
-        <div id="log">
-
-        </div>
     </body>
 </html>
