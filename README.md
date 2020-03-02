@@ -1,6 +1,6 @@
 # Robosnipers Deathmatch
 
-This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by Interlogica.
+This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by [Interlogica](https://www.interlogica.it).
 
 
 ## Component Overview
@@ -8,6 +8,8 @@ This is all the software needed for the Robosnipers Deathmath IoT hackaton that 
 Here's a visual overview of all the software components needed for the event to run properly
 
 ![Component Overview](./docs/Robosnipers.png)
+
+[Cloudcraft Link ot clone and change the schema](https://cloudcraft.co/view/5d17f23a-dddb-47f4-b2a7-06dde11f85de?key=3m40jn0enpfd2t90)
 
 ## Development
 
