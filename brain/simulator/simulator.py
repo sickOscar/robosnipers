@@ -4,7 +4,7 @@ import asyncio
 
 class Simulator:
 
-    def __init__(self, world, socket_registry, mqtt_client, cli_args):
+    def __init__(self, world, socket_registry, mqtt_client):
         
         self.world = world
         self.socket_registry = socket_registry

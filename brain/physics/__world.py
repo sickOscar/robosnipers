@@ -16,7 +16,7 @@ from .const import (
 
 class __World:
 
-    def __init__(self, cli_args):
+    def __init__(self, debug = False):
         # load map
         self.map = self.load_map()
         # load world
@@ -24,22 +24,7 @@ class __World:
         # load agents
         self.agents = {}
 
-        self.cli_args = cli_args
-
-        self.debug = False
-
-        try:
-            arguments, values = getopt.getopt(self.cli_args[1:], ['d'], ['debug'])
-
-            for currentArgument, currentValue in arguments:
-                if currentArgument in ("-d", "--debug"):
-                    print ("enabling debug draw")
-                    self.debug = True
-
-        except getopt.error as err:
-            # output error, and return with an error code
-            print (str(err))
-            sys.exit(2)
+        self.debug = debug
 
         self.debug_objects = []
 

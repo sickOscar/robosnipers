@@ -12,35 +12,16 @@ from net.mqtt_client import MqttClient
 from physics.world import World
 
 from simulator.simulator import Simulator
-
-def print_help():
-    print("""
-Robolaser Brain
-
-Options:
-    -h, --help      print this help
-    --debug     starts pygame debug rendering
-    
-    """)
-
+import argparse
 
 if __name__ == '__main__':
 
-    try:
-        arguments, values = getopt.getopt(sys.argv[1:], ['h'], ['help'])
-        for currentArgument, currentValue in arguments:
-            if currentArgument in ("-h", "--help"):
-                print_help()
-                sys.exit(0)
-
-    except getopt.error as err:
-        pass
-        # output error, and return with an error code
-        #print (str(err))
-        #sys.exit(2)
+    parser = argparse.ArgumentParser(description="Robolaser Brain")
+    parser.add_argument('--debug', help="starts pygame debug rendering", action="store_true")
+    args = parser.parse_args()
 
     # Physics
-    world = World.get_instance(cli_args=sys.argv)
+    world = World.get_instance(debug=args.debug)
 
     # MQTT
     mqtt_client = MqttClient(world)
@@ -52,8 +33,8 @@ if __name__ == '__main__':
     simulator = Simulator(
         world=world, 
         socket_registry=registry, 
-        mqtt_client=mqtt_client,
-        cli_args=sys.argv)
+        mqtt_client=mqtt_client
+        )
 
     # FE websocket Server
     app = AppServer()
