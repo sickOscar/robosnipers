@@ -1,4 +1,7 @@
-# Robolaser (name TBD)
+# Robosnipers Deathmatch
+
+This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by Interlogica.
+
 
 ## Development
 
