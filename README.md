@@ -7,7 +7,7 @@ This is all the software needed for the Robosnipers Deathmath IoT hackaton that 
 
 Here's a visual overview of all the software components needed for the event to run properly
 
-![Component Overview](./docs/Robosnipers.svg)
+![Component Overview](./docs/Robosnipers.png)
 
 ## Development
 
