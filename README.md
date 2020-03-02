@@ -59,7 +59,7 @@ We should provide some kind of bot to train the players AI, which should work in
 
 Since there's no language dependency, we should provide the players some boilerplate code in as many languages as we can.
 
-<a href="testsimulator"></a>
+<a name="testsimulator"></a>
 ### Test Simulator
 
 Building an AI agent that speaks to a remote robot via MQTT isn't an easy task. I think the players/teams partecipatig should be able to train themselves before the event, hence the need of a simulator. 
@@ -68,11 +68,11 @@ The ideal way to distribute this simulatori is via a docker compose file. We sho
 
 Anyway, a viable piece of software should have the following components
 
-<a href="localmqttbroker"></a>
+<a name="localmqttbroker"></a>
 #### Local MQTT Broker / BIG Brain
 We should emulate the MQTT broker on localhost. We also probably need to simulate the big brain, but it depends on what we want to add to it.
 
-<a href="worldsimulator"></a>
+<a name="worldsimulator"></a>
 #### World Simulator / Brain
 This may be the hardest part. This is written in python and will be referred by the name of "brain". The source code is in the ```brain``` folder.
 
@@ -84,13 +84,13 @@ Finally, it should send the data via WebSocket to some kind of renderer, which w
 
 
 
-<a href="webrenderer"></a>
+<a name="webrenderer"></a>
 #### Web Renderer 
 A web page that has the role of rendering what's happening in the simulated world. With this component, the sky is the limit...
 
 An easy implementation could be made with [p5.js](https://p5js.org), the easiest graphic library I've used. It should render the main map (loaded from a JSON file in GEOJson format) and listen to the WebSocket for the world updates.
 
-<a href="mqttprotocol"></a>
+<a name="mqttprotocol"></a>
 ## MQTT protocol
 
 TODO
