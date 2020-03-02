@@ -3,6 +3,12 @@
 This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by Interlogica.
 
 
+## Component Overview
+
+Here's a visual overview of all the software components needed for the event to run properly
+
+![Component Overview](./docs/Robosnipers.svg)
+
 ## Development
 
 To start developing this app you need python3 and docker installed. I suggest to use a Linux machine, many of the things here have never been tested on Windows (and maybe never will).
