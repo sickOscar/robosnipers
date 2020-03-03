@@ -23,11 +23,11 @@ Here's a visual overview of all the software components needed for the event to 
 
 ![Component Overview](./docs/Robosnipers.png)
 
-[Cloudcraft Link ot clone and change the schema](https://cloudcraft.co/view/5d17f23a-dddb-47f4-b2a7-06dde11f85de?key=3m40jn0enpfd2t90)
+[Cloudcraft Link to clone and change the schema](https://cloudcraft.co/view/5d17f23a-dddb-47f4-b2a7-06dde11f85de?key=3m40jn0enpfd2t90)
 
 <a name="robotclient"></a>
 ### Robot Client
-A python program will be deployed on every piece of harware (Raspberry 3B+?) we will use. It will have the following responsabilities
+A python program will be deployed on every piece of hardware (Raspberry 3B+?) we will use. It will have the following responsabilities
 
 #### MQTT Communication
 It will be in charge of receiving commands from the central MQTT broker and sending raw sensor data via MQTT. For the protocol used, see the [MQTT protocol](#mqttprotocol) section
@@ -58,6 +58,8 @@ The players (teams actually) should build this one: it should implement the MQTT
 We should provide some kind of bot to train the players AI, which should work in the same way as a player's program would. This is also a way to test our full implementation.
 
 Since there's no language dependency, we should provide the players some boilerplate code in as many languages as we can.
+
+A simple implementation could be found in ```bot``` folder
 
 <a name="testsimulator"></a>
 ### Test Simulator
@@ -93,7 +95,46 @@ An easy implementation could be made with [p5.js](https://p5js.org), the easiest
 <a name="mqttprotocol"></a>
 ## MQTT protocol
 
-TODO
+Here is proposal for the topic namespace to be used to communicate to and from the robot
+
+### Control topics
+
+The following section will provide a list of topics to be used as control topics for enrolling and handshaking
+
+```
+# add your bot to the world
+subscribe/BOT_ID {empty payload} 
+```
+
+### Sensors topics
+
+The following topics will be sent to the broker by the robots
+
+```
+# proximity sensors readings in cm
+sensors/BOT_ID/proximity {front_left}|{front_right}|{rear}
+```
+
+### Command topics
+
+The following topics are to be used to send commands from the player's client to the robot
+
+```
+# move your bot forward
+command/BOT_ID/move {empty payload} 
+```
+```
+# move your bot downward
+command/BOT_ID/rear {empty payload} 
+```
+```
+# turn your bot
+command/BOT_ID/turn {"left" or "right"}
+```
+```
+# stops bot engine
+command/BOT_ID/stop {empty payload} 
+```
 
 <a name="development"></a>
 ## Development
