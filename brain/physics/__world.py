@@ -86,7 +86,11 @@ class __World:
                         # the y components.
                         vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
 
-                        pygame.draw.polygon(screen, colors[body.type], vertices)
+                        
+                        if body.userData is not None and 'color' in body.userData:
+                            pygame.draw.polygon(screen, body.userData['color'], vertices)
+                        else:
+                            pygame.draw.polygon(screen, colors[body.type], vertices)
 
                 # Draw debug objects 
                 for debug_object in self.world.debug_objects:

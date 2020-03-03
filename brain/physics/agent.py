@@ -4,6 +4,7 @@ import math
 # from physics import Tire, RayCastClosestCallback
 
 from .tire import Tire
+from .servo import Servo
 from .raycast_closest_callback import RayCastClosestCallback
 
 from .const import (
@@ -59,6 +60,7 @@ class Agent:
         self.body.CreatePolygonFixture(vertices=vertices, density=density)
         self.body.userData = {'obj': self}
         
+        # TIRES
         self.tires = [Tire(self, **tire_kws) for i in range(4)]
 
         anchors = Agent.tire_anchors
@@ -79,6 +81,24 @@ class Agent:
 
             tire.body.position = self.body.worldCenter + anchor
             joints.append(j)
+
+        # X SERVO
+        self.x_servo = Servo(self)
+        x_servo_anchor = (0, AGENT_HEIGHT)
+        self.x_servo_joint = world.CreateRevoluteJoint(
+            bodyA=self.body,
+            bodyB=self.x_servo.body,
+            localAnchorA=x_servo_anchor,
+            localAnchorB=(0,0),
+            enableMotor=False,
+            maxMotorTorque=1000,
+            enableLimit=True,
+            lowerAngle=0,
+            upperAngle=0,
+        )
+        self.x_servo.body.position = self.body.worldCenter + x_servo_anchor
+        self.x_servo.set_joint(self.x_servo_joint)
+        
 
     def update(self, hz=60.0):
         for tire in self.tires:
@@ -114,6 +134,9 @@ class Agent:
         front_left_joint.SetLimits(new_angle, new_angle)
         front_right_joint.SetLimits(new_angle, new_angle)
 
+        # X SERVO UPDATE
+        self.x_servo.update()
+        
 
     def raycast(self):
 
@@ -143,11 +166,11 @@ class Agent:
 
         self.sensors["rear"] = self.raycast_single_sensor(rear_point1, rear_point2)
 
-        self.raycast_camera(
-            self.body.GetWorldPoint(Box2D.b2Vec2(0, AGENT_HEIGHT)),
-            math.pi / 2,
-            50
-        )
+        # self.raycast_camera(
+        #     self.body.GetWorldPoint(Box2D.b2Vec2(0, AGENT_HEIGHT)),
+        #     math.pi / 2,
+        #     50
+        # )
 
             
     def raycast_single_sensor(self, start_point, end_point):
