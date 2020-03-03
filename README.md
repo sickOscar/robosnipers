@@ -7,7 +7,7 @@ This is all the software needed for the Robosnipers Deathmath IoT hackaton that 
 - [Component Overview](#overview)
     - [Robot Client](#robotclient)
     - [Mqtt Broker](#mqttbroker) 
-    - [Big Brain](#bigbrain)
+    - [Central Hub](#centralhub)
     - [Player Client](#playerclient)
     - [Test Simulator](#testsimulator)
         - [Local MQTT Broker](#localmqttbroker)
@@ -45,8 +45,8 @@ The MQTT broker is the central gateway for all the information from and to the r
 
 A first (and naive) implementation could be just a mosquitto broker but we will need something more configurable for security reasons (avoid players to send malicious commands to other robots) and to handle a proper handshaking. Maybe Kafka?
 
-<a name="bigbrain"></a>
-### Big Brain
+<a name="centralhub"></a>
+### Central Hub
 
 This part will be always listening to everything happening during the match and will be responsible to keep tracking of the score and cosmetic effects: let's suppose we want to add sound or visual effects, this wil be the key component to do that. Moreover, maybe this is where the handshaking and the robot enrolling should happen.
 
@@ -71,8 +71,8 @@ The ideal way to distribute this simulatori is via a docker compose file. We sho
 Anyway, a viable piece of software should have the following components
 
 <a name="localmqttbroker"></a>
-#### Local MQTT Broker / BIG Brain
-We should emulate the MQTT broker on localhost. We also probably need to simulate the big brain, but it depends on what we want to add to it.
+#### Local MQTT Broker / Central Hub
+We should emulate the MQTT broker on localhost. We also probably need to simulate the central hub, but it depends on what we want to add to it.
 
 <a name="worldsimulator"></a>
 #### World Simulator / Brain
