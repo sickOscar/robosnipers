@@ -173,6 +173,16 @@ This script supports the following command line arguments:
 - -h, --help prints the help
 - --debug shows a window with pygame running to check if the world is rendering correctly 
 
+### Simple bot
+
+To start a simple python bot, go to ```bot``` folder and type
+
+```
+python3 main.py
+```
+
+Having the brain running, you should see the robot on the map.
+
 ### Web view
 
 To run both the web view and the map editor, you need to run a web server on the ```assets``` folder. There are many ways to do that, maybe the easiest one is the following python one-liner.
