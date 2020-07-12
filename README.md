@@ -1,29 +1,23 @@
 # Robosnipers Deathmatch
 
-> _Siamo alla fine del XX secolo,_
-
+> _Siamo alla fine del XX secolo,_<br>
 > _il mondo intero è sconvolto dalle esplosioni atomiche_
 <br>
 
-> _Sulla faccia della terra gli oceani erano scomparsi,_
-
+> _Sulla faccia della terra gli oceani erano scomparsi,_<br>
 > _le pianure avevano l'aspetto di desolati deserti_
 <br>
 
 > _La razza umana non era sopravvissuta..._
 <br>
 
-> _Le macchine emersero dalle ceneri dell'incubo nucleare_
-
+> _Le macchine emersero dalle ceneri dell'incubo nucleare_<br>
 > _la loro guerra per sterminarsi a vicenda aveva infuriato per anni_
 <br>
 
-> _Ma la battaglia finale non si sarebbe combattuta nel futuro,_
-
-> _sarebbe stata combattuta qui,_
-
-> _nel nostro presente,_
-
+> _Ma la battaglia finale non si sarebbe combattuta nel futuro,_<br>
+> _sarebbe stata combattuta qui,_<br>
+> _nel nostro presente,_<br>
 > _oggi..._
 
 ![Ken Terminator](http://www.hokutonoken.it/altrichar/glenn.jpg)
