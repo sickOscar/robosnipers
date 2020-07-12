@@ -1,5 +1,34 @@
 # Robosnipers Deathmatch
 
+> _Siamo alla fine del XX secolo,_
+
+> _il mondo intero è sconvolto dalle esplosioni atomiche_
+<br>
+
+> _Sulla faccia della terra gli oceani erano scomparsi,_
+
+> _le pianure avevano l'aspetto di desolati deserti_
+<br>
+
+> _La razza umana non era sopravvissuta..._
+<br>
+
+> _Le macchine emersero dalle ceneri dell'incubo nucleare_
+
+> _la loro guerra per sterminarsi a vicenda aveva infuriato per anni_
+<br>
+
+> _Ma la battaglia finale non si sarebbe combattuta nel futuro,_
+
+> _sarebbe stata combattuta qui,_
+
+> _nel nostro presente,_
+
+> _oggi..._
+
+![Ken Terminator](http://www.hokutonoken.it/altrichar/glenn.jpg)
+
+
 This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by [Interlogica](https://www.interlogica.it).
 
 ## Index
