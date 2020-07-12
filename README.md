@@ -1,4 +1,9 @@
-# Robosnipers Deathmatch
+# 🤖 🔥 Robosnipers Deathmatch 🔥 🤖
+
+
+This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by [Interlogica](https://www.interlogica.it).
+
+<hr>
 
 > _Siamo alla fine del XX secolo,_<br>
 > _il mondo intero è sconvolto dalle esplosioni atomiche_
@@ -22,8 +27,7 @@
 
 ![Ken Terminator](http://www.hokutonoken.it/altrichar/glenn.jpg)
 
-
-This is all the software needed for the Robosnipers Deathmath IoT hackaton that will be held by [Interlogica](https://www.interlogica.it).
+<hr>
 
 ## Index
 
