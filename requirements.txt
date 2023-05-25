@@ -1,4 +1,4 @@
 box2d-py==2.3.8
 paho-mqtt==1.5.0
 pygame==1.9.6
-tornado==6.0.3
+tornado==6.3.2
